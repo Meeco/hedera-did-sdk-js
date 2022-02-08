@@ -1,9 +1,9 @@
 import { AccountId, Client, PrivateKey, Timestamp, TopicMessageQuery } from "@hashgraph/sdk";
-import { Hashing, HcsDid } from "../../../dist";
+import { Hashing, HcsDid } from "../../dist";
 
 const TOPIC_REGEXP = /^0\.0\.[0-9]{8,}/;
-const OPERATOR_ID = "0.0.12710106";
-const OPERATOR_KEY = "302e020100300506032b657004220420bc45334a1313725653d3513fcc67edb15f76985f537ca567e2177b0be9906d49";
+const OPERATOR_ID = "";
+const OPERATOR_KEY = "";
 // testnet, previewnet, mainnet
 const NETWORK = "testnet";
 
