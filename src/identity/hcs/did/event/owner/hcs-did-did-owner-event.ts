@@ -1,25 +1,25 @@
 import { PublicKey } from "@hashgraph/sdk";
-import { Hashing } from "../../../..";
-import { HcsDidEvent } from "./hcs-did-event";
-import { HcsDidEventName } from "./hcs-did-event-name";
+import { Hashing } from "../../../../..";
+import { HcsDidEvent } from "../hcs-did-event";
+import { HcsDidEventName } from "../hcs-did-event-name";
 
-export type VerificationMethodSupportedKeyType = "Ed25519VerificationKey2018";
-export class HcsDidVerificationMethodEvent extends HcsDidEvent {
-    public readonly name = HcsDidEventName.VERIFICATION_METHOD;
+export class HcsDidDidOwnerEvent extends HcsDidEvent {
+    public static KEY_TYPE = "Ed25519VerificationKey2018";
+
+    public readonly name = HcsDidEventName.DID_OWNER;
 
     protected id: string;
-    protected type: VerificationMethodSupportedKeyType;
+    protected type = HcsDidDidOwnerEvent.KEY_TYPE;
     protected controller: string;
     protected publicKey: PublicKey;
 
     /**
      * TODO: I guess controller param is not necessary and can be derived from the publicKey, right?
      */
-    constructor(id: string, type: VerificationMethodSupportedKeyType, controller: string, publicKey: PublicKey) {
+    constructor(id: string, controller: string, publicKey: PublicKey) {
         super();
 
         this.id = id;
-        this.type = type;
         this.controller = controller;
         this.publicKey = publicKey;
     }
@@ -59,8 +59,8 @@ export class HcsDidVerificationMethodEvent extends HcsDidEvent {
         return JSON.stringify(this.toJsonTree());
     }
 
-    static fromJsonTree(tree: any): HcsDidVerificationMethodEvent {
+    static fromJsonTree(tree: any): HcsDidDidOwnerEvent {
         const publicKey = PublicKey.fromBytes(Hashing.multibase.decode(tree.publicKeyMultibase));
-        return new HcsDidVerificationMethodEvent(tree.id, tree.type, tree.controller, publicKey);
+        return new HcsDidDidOwnerEvent(tree.id, tree.controller, publicKey);
     }
 }

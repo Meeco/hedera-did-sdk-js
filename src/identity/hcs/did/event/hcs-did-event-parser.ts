@@ -1,17 +1,17 @@
 import { Hashing } from "../../../..";
 import { HcsDidDeleteEvent } from "./hcs-did-delete-event";
-import { HcsDidDidOwnerEvent } from "./hcs-did-did-owner-event";
+import { HcsDidDidOwnerEvent } from "./owner/hcs-did-did-owner-event";
 import { HcsDidEvent } from "./hcs-did-event";
 import { HcsDidEventName } from "./hcs-did-event-name";
-import { HcsDidServiceEvent } from "./hcs-did-service-event";
-import { HcsDidVerificationMethodEvent } from "./hcs-did-verification-method-event";
-import { HcsDidVerificationRelationshipEvent } from "./hcs-did-verification-relationship-event";
+import { HcsDidCreateServiceEvent } from "./service/hcs-did-create-service-event";
+import { HcsDidCreateVerificationMethodEvent } from "./verification-method/hcs-did-create-verification-method-event";
+import { HcsDidCreateVerificationRelationshipEvent } from "./verification-relationship/hcs-did-create-verification-relationship-event";
 
 const EVENT_NAME_TO_CLASS = {
     [HcsDidEventName.DID_OWNER]: HcsDidDidOwnerEvent,
-    [HcsDidEventName.SERVICE]: HcsDidServiceEvent,
-    [HcsDidEventName.VERIFICATION_METHOD]: HcsDidVerificationMethodEvent,
-    [HcsDidEventName.VERIFICATION_RELATIONSHIP]: HcsDidVerificationRelationshipEvent,
+    [HcsDidEventName.SERVICE]: HcsDidCreateServiceEvent,
+    [HcsDidEventName.VERIFICATION_METHOD]: HcsDidCreateVerificationMethodEvent,
+    [HcsDidEventName.VERIFICATION_RELATIONSHIP]: HcsDidCreateVerificationRelationshipEvent,
     [HcsDidEventName.DELETE]: HcsDidDeleteEvent,
 };
 

@@ -2,7 +2,7 @@ import {
     DidMethodOperation,
     HcsDidDidOwnerEvent,
     HcsDidMessage,
-    HcsDidServiceEvent,
+    HcsDidCreateServiceEvent,
     HcsDidVerificationMethodEvent,
     HcsDidVerificationRelationshipEvent,
 } from "..";
@@ -135,8 +135,8 @@ export class DidDocument {
 
                 this.services.set(event.getId(), {
                     id: event.getId(),
-                    type: (event as HcsDidServiceEvent).getType(),
-                    serviceEndpoint: (event as HcsDidServiceEvent).getServiceEndpoint(),
+                    type: (event as HcsDidCreateServiceEvent).getType(),
+                    serviceEndpoint: (event as HcsDidCreateServiceEvent).getServiceEndpoint(),
                 });
                 return;
             case HcsDidEventName.VERIFICATION_METHOD:
@@ -208,8 +208,8 @@ export class DidDocument {
                 }
                 this.services.set(event.getId(), {
                     id: event.getId(),
-                    type: (event as HcsDidServiceEvent).getType(),
-                    serviceEndpoint: (event as HcsDidServiceEvent).getServiceEndpoint(),
+                    type: (event as HcsDidCreateServiceEvent).getType(),
+                    serviceEndpoint: (event as HcsDidCreateServiceEvent).getServiceEndpoint(),
                 });
                 return;
             case HcsDidEventName.VERIFICATION_METHOD:
