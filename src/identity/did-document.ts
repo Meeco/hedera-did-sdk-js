@@ -1,11 +1,4 @@
-import {
-    DidMethodOperation,
-    HcsDidDidOwnerEvent,
-    HcsDidMessage,
-    HcsDidCreateServiceEvent,
-    HcsDidVerificationMethodEvent,
-    HcsDidVerificationRelationshipEvent,
-} from "..";
+import { DidMethodOperation, HcsDidCreateDidOwnerEvent, HcsDidCreateServiceEvent, HcsDidMessage } from "..";
 import { DidDocumentJsonProperties } from "./did-document-json-properties";
 import { DidSyntax } from "./did-syntax";
 import { HcsDidEventName } from "./hcs/did/event/hcs-did-event-name";
@@ -127,9 +120,9 @@ export class DidDocument {
 
                 this.owners.set(event.getId(), {
                     id: event.getId(),
-                    type: (event as HcsDidDidOwnerEvent).getType(),
-                    controller: (event as HcsDidDidOwnerEvent).getController(),
-                    publicKeyMultibase: (event as HcsDidDidOwnerEvent).getPublicKeyMultibase(),
+                    type: (event as HcsDidCreateDidOwnerEvent).getType(),
+                    controller: (event as HcsDidCreateDidOwnerEvent).getController(),
+                    publicKeyMultibase: (event as HcsDidCreateDidOwnerEvent).getPublicKeyMultibase(),
                 });
                 return;
             case HcsDidEventName.SERVICE:

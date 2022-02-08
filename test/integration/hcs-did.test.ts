@@ -769,6 +769,7 @@ describe("HcsDid", () => {
             expect(didDocument).toEqual({
                 "@context": "https://www.w3.org/ns/did/v1",
                 assertionMethod: [`${did.getIdentifier()}#did-root-key`],
+                authentication: [`${did.getIdentifier()}#did-root-key`],
                 id: did.getIdentifier(),
                 verificationMethod: [
                     {

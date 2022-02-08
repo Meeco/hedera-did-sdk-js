@@ -3,30 +3,30 @@ import {
     DidDocument,
     DidMethodOperation,
     Hashing,
-    HcsDidDidOwnerEvent,
-    HcsDidMessage,
+    HcsDidCreateDidOwnerEvent,
     HcsDidCreateServiceEvent,
+    HcsDidMessage,
     HcsDidTransaction,
     MessageEnvelope,
 } from "../../..";
 import { DidSyntax } from "../../did-syntax";
 import { HcsDidDeleteEvent } from "./event/hcs-did-delete-event";
 import { HcsDidEvent } from "./event/hcs-did-event";
-import { HcsDidCreateVerificationMethodEvent } from "./event/verification-method/hcs-did-create-verification-method-event";
-import { HcsDidCreateVerificationRelationshipEvent } from "./event/verification-relationship/hcs-did-create-verification-relationship-event";
-import { ServiceTypes } from "./event/service/types";
-import { HcsDidEventMessageResolver } from "./hcs-did-event-message-resolver";
-import { HcsDidUpdateServiceEvent } from "./event/service/hcs-did-update-service-event";
 import { HcsDidRevokeServiceEvent } from "./event/service/hcs-did-revoke-service-event";
+import { HcsDidUpdateServiceEvent } from "./event/service/hcs-did-update-service-event";
+import { ServiceTypes } from "./event/service/types";
+import { HcsDidCreateVerificationMethodEvent } from "./event/verification-method/hcs-did-create-verification-method-event";
+import { HcsDidRevokeVerificationMethodEvent } from "./event/verification-method/hcs-did-revoke-verification-method-event";
+import { HcsDidUpdateVerificationMethodEvent } from "./event/verification-method/hcs-did-update-verification-method-event";
 import { VerificationMethodSupportedKeyType } from "./event/verification-method/types";
+import { HcsDidCreateVerificationRelationshipEvent } from "./event/verification-relationship/hcs-did-create-verification-relationship-event";
+import { HcsDidRevokeVerificationRelationshipEvent } from "./event/verification-relationship/hcs-did-revoke-verification-relationship-event";
+import { HcsDidUpdateVerificationRelationshipEvent } from "./event/verification-relationship/hcs-did-update-verification-relationship-event";
 import {
     VerificationRelationshipSupportedKeyType,
     VerificationRelationshipType,
 } from "./event/verification-relationship/types";
-import { HcsDidUpdateVerificationMethodEvent } from "./event/verification-method/hcs-did-update-verification-method-event";
-import { HcsDidRevokeVerificationMethodEvent } from "./event/verification-method/hcs-did-revoke-verification-method-event";
-import { HcsDidUpdateVerificationRelationshipEvent } from "./event/verification-relationship/hcs-did-update-verification-relationship-event";
-import { HcsDidRevokeVerificationRelationshipEvent } from "./event/verification-relationship/hcs-did-revoke-verification-relationship-event";
+import { HcsDidEventMessageResolver } from "./hcs-did-event-message-resolver";
 
 export class HcsDid {
     public static DID_METHOD = DidSyntax.Method.HEDERA_HCS;
@@ -91,7 +91,7 @@ export class HcsDid {
         /**
          * Set ownership
          */
-        const event = new HcsDidDidOwnerEvent(
+        const event = new HcsDidCreateDidOwnerEvent(
             this.identifier + "#did-root-key",
             this.identifier,
             this.privateKey.publicKey

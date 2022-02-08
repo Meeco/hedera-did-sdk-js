@@ -3,9 +3,9 @@ import {
     DidDocument,
     DidMethodOperation,
     Hashing,
-    HcsDidDidOwnerEvent,
-    HcsDidMessage,
+    HcsDidCreateDidOwnerEvent,
     HcsDidCreateServiceEvent,
+    HcsDidMessage,
 } from "../../dist";
 import { HcsDidCreateVerificationMethodEvent } from "../../dist/identity/hcs/did/event/verification-method/hcs-did-create-verification-method-event";
 import { HcsDidCreateVerificationRelationshipEvent } from "../../dist/identity/hcs/did/event/verification-relationship/hcs-did-create-verification-relationship-event";
@@ -36,7 +36,7 @@ describe("DidDocument", () => {
                 new HcsDidMessage(
                     DidMethodOperation.CREATE,
                     identifier,
-                    new HcsDidDidOwnerEvent(identifier + "#did-root-key", identifier, privateKey.publicKey)
+                    new HcsDidCreateDidOwnerEvent(identifier + "#did-root-key", identifier, privateKey.publicKey)
                 ),
             ];
             const doc = new DidDocument(identifier, messages);
@@ -65,7 +65,7 @@ describe("DidDocument", () => {
                 new HcsDidMessage(
                     DidMethodOperation.CREATE,
                     identifier,
-                    new HcsDidDidOwnerEvent(identifier + "#did-root-key", identifier, privateKey.publicKey)
+                    new HcsDidCreateDidOwnerEvent(identifier + "#did-root-key", identifier, privateKey.publicKey)
                 ),
                 new HcsDidMessage(
                     DidMethodOperation.CREATE,
@@ -148,7 +148,7 @@ describe("DidDocument", () => {
                 new HcsDidMessage(
                     DidMethodOperation.CREATE,
                     identifier,
-                    new HcsDidDidOwnerEvent(identifier + "#did-root-key", identifier, privateKey.publicKey)
+                    new HcsDidCreateDidOwnerEvent(identifier + "#did-root-key", identifier, privateKey.publicKey)
                 ),
                 new HcsDidMessage(
                     DidMethodOperation.CREATE,
@@ -289,7 +289,7 @@ describe("DidDocument", () => {
                 new HcsDidMessage(
                     DidMethodOperation.CREATE,
                     identifier,
-                    new HcsDidDidOwnerEvent(identifier + "#did-root-key", identifier, privateKey.publicKey)
+                    new HcsDidCreateDidOwnerEvent(identifier + "#did-root-key", identifier, privateKey.publicKey)
                 ),
                 new HcsDidMessage(
                     DidMethodOperation.CREATE,
