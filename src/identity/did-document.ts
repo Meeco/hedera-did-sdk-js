@@ -9,6 +9,11 @@ import {
 import { DidDocumentJsonProperties } from "./did-document-json-properties";
 import { DidSyntax } from "./did-syntax";
 import { HcsDidEventName } from "./hcs/did/event/hcs-did-event-name";
+import { HcsDidUpdateServiceEvent } from "./hcs/did/event/service/hcs-did-update-service-event";
+import { HcsDidCreateVerificationMethodEvent } from "./hcs/did/event/verification-method/hcs-did-create-verification-method-event";
+import { HcsDidUpdateVerificationMethodEvent } from "./hcs/did/event/verification-method/hcs-did-update-verification-method-event";
+import { HcsDidCreateVerificationRelationshipEvent } from "./hcs/did/event/verification-relationship/hcs-did-create-verification-relationship-event";
+import { HcsDidUpdateVerificationRelationshipEvent } from "./hcs/did/event/verification-relationship/hcs-did-update-verification-relationship-event";
 
 export class DidDocument {
     private id: string;
@@ -149,13 +154,13 @@ export class DidDocument {
 
                 this.verificationMethods.set(event.getId(), {
                     id: event.getId(),
-                    type: (event as HcsDidVerificationMethodEvent).getType(),
-                    controller: (event as HcsDidVerificationMethodEvent).getController(),
-                    publicKeyMultibase: (event as HcsDidVerificationMethodEvent).getPublicKeyMultibase(),
+                    type: (event as HcsDidCreateVerificationMethodEvent).getType(),
+                    controller: (event as HcsDidCreateVerificationMethodEvent).getController(),
+                    publicKeyMultibase: (event as HcsDidCreateVerificationMethodEvent).getPublicKeyMultibase(),
                 });
                 return;
             case HcsDidEventName.VERIFICATION_RELATIONSHIP:
-                const type = (event as HcsDidVerificationRelationshipEvent).getRelationshipType();
+                const type = (event as HcsDidCreateVerificationRelationshipEvent).getRelationshipType();
 
                 if (this.verificationRelationships[type]) {
                     if (this.verificationRelationships[type].includes(event.getId())) {
@@ -170,9 +175,11 @@ export class DidDocument {
                     if (!this.verificationMethods.has(event.getId())) {
                         this.verificationMethods.set(event.getId(), {
                             id: event.getId(),
-                            type: (event as HcsDidVerificationRelationshipEvent).getType(),
-                            controller: (event as HcsDidVerificationRelationshipEvent).getController(),
-                            publicKeyMultibase: (event as HcsDidVerificationRelationshipEvent).getPublicKeyMultibase(),
+                            type: (event as HcsDidCreateVerificationRelationshipEvent).getType(),
+                            controller: (event as HcsDidCreateVerificationRelationshipEvent).getController(),
+                            publicKeyMultibase: (
+                                event as HcsDidCreateVerificationRelationshipEvent
+                            ).getPublicKeyMultibase(),
                         });
                     }
                 } else {
@@ -208,8 +215,8 @@ export class DidDocument {
                 }
                 this.services.set(event.getId(), {
                     id: event.getId(),
-                    type: (event as HcsDidCreateServiceEvent).getType(),
-                    serviceEndpoint: (event as HcsDidCreateServiceEvent).getServiceEndpoint(),
+                    type: (event as HcsDidUpdateServiceEvent).getType(),
+                    serviceEndpoint: (event as HcsDidUpdateServiceEvent).getServiceEndpoint(),
                 });
                 return;
             case HcsDidEventName.VERIFICATION_METHOD:
@@ -222,13 +229,13 @@ export class DidDocument {
 
                 this.verificationMethods.set(event.getId(), {
                     id: event.getId(),
-                    type: (event as HcsDidVerificationMethodEvent).getType(),
-                    controller: (event as HcsDidVerificationMethodEvent).getController(),
-                    publicKeyMultibase: (event as HcsDidVerificationMethodEvent).getPublicKeyMultibase(),
+                    type: (event as HcsDidUpdateVerificationMethodEvent).getType(),
+                    controller: (event as HcsDidUpdateVerificationMethodEvent).getController(),
+                    publicKeyMultibase: (event as HcsDidUpdateVerificationMethodEvent).getPublicKeyMultibase(),
                 });
                 return;
             case HcsDidEventName.VERIFICATION_RELATIONSHIP:
-                const type = (event as any).getRelationshipType();
+                const type = (event as HcsDidUpdateVerificationRelationshipEvent).getRelationshipType();
 
                 if (this.verificationRelationships[type]) {
                     if (!this.verificationRelationships[type].includes(event.getId())) {
@@ -240,9 +247,11 @@ export class DidDocument {
 
                     this.verificationMethods.set(event.getId(), {
                         id: event.getId(),
-                        type: (event as any).getType(),
-                        controller: (event as any).getController(),
-                        publicKeyMultibase: (event as any).getPublicKeyMultibase(),
+                        type: (event as HcsDidUpdateVerificationRelationshipEvent).getType(),
+                        controller: (event as HcsDidUpdateVerificationRelationshipEvent).getController(),
+                        publicKeyMultibase: (
+                            event as HcsDidUpdateVerificationRelationshipEvent
+                        ).getPublicKeyMultibase(),
                     });
                 } else {
                     console.warn(
@@ -294,7 +303,7 @@ export class DidDocument {
 
                 return;
             case HcsDidEventName.VERIFICATION_RELATIONSHIP:
-                const type = (event as any).getRelationshipType();
+                const type = (event as HcsDidUpdateVerificationRelationshipEvent).getRelationshipType();
 
                 if (this.verificationRelationships[type]) {
                     if (!this.verificationRelationships[type].includes(event.getId())) {
