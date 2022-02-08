@@ -343,7 +343,43 @@ describe("HcsDid", () => {
                 ],
             });
 
-            // DIDOwner and Service event
+            expect(did.getMessages().length).toEqual(3);
+        });
+
+        it("publish a revoke Service message and verify DID Document", async () => {
+            const privateKey = PrivateKey.fromString(OPERATOR_KEY);
+            const did = new HcsDid({ privateKey, client });
+
+            await did.register();
+            await did.addService({
+                id: did.getIdentifier() + "#service-1",
+                type: "LinkedDomains",
+                serviceEndpoint: "https://example.com/vcs",
+            });
+            await did.revokeService({
+                id: did.getIdentifier() + "#service-1",
+            });
+
+            console.log(`https://testnet.dragonglass.me/hedera/topics/${did.getTopicId().toString()}`);
+
+            const didDoc = await did.resolve();
+            const didDocument = didDoc.toJsonTree();
+
+            expect(didDocument).toEqual({
+                "@context": "https://www.w3.org/ns/did/v1",
+                assertionMethod: [`${did.getIdentifier()}#did-root-key`],
+                authentication: [`${did.getIdentifier()}#did-root-key`],
+                id: did.getIdentifier(),
+                verificationMethod: [
+                    {
+                        controller: did.getIdentifier(),
+                        id: `${did.getIdentifier()}#did-root-key`,
+                        publicKeyMultibase: Hashing.multibase.encode(privateKey.publicKey.toBytes()),
+                        type: "Ed25519VerificationKey2018",
+                    },
+                ],
+            });
+
             expect(did.getMessages().length).toEqual(3);
         });
     });
@@ -404,9 +440,8 @@ describe("HcsDid", () => {
                 "did:hedera:testnet:z6Mkkcn1EDXc5vzpmvnQeCKpEswyrnQG7qq59k92gFRm1EGk_0.0.29617801#key-1";
             const publicKey = HcsDid.stringToPublicKey("z6Mkkcn1EDXc5vzpmvnQeCKpEswyrnQG7qq59k92gFRm1EGk");
 
-            await (
-                await did.register()
-            ).addVerificaitonMethod({
+            await did.register();
+            await did.addVerificaitonMethod({
                 id: newVerificaitonDid,
                 type: "Ed25519VerificationKey2018",
                 controller: did.getIdentifier(),
@@ -447,6 +482,115 @@ describe("HcsDid", () => {
 
             // DIDOwner and VerificationMethod event
             expect(did.getMessages().length).toEqual(2);
+        });
+
+        it("publish an update VerificationMethod message and verify DID Document", async () => {
+            const privateKey = PrivateKey.fromString(OPERATOR_KEY);
+            const did = new HcsDid({ privateKey, client });
+
+            //new verificaiton DID and publickey
+            const newVerificaitonDid =
+                "did:hedera:testnet:z6Mkkcn1EDXc5vzpmvnQeCKpEswyrnQG7qq59k92gFRm1EGk_0.0.29617801#key-1";
+            const publicKey = HcsDid.stringToPublicKey("z6Mkkcn1EDXc5vzpmvnQeCKpEswyrnQG7qq59k92gFRm1EGk");
+            const updatePublicKey = HcsDid.stringToPublicKey("z6MkhHbhBBLdKGiGnHPvrrH9GL7rgw6egpZiLgvQ9n7pHt1P");
+
+            await did.register();
+            await did.addVerificaitonMethod({
+                id: newVerificaitonDid,
+                type: "Ed25519VerificationKey2018",
+                controller: did.getIdentifier(),
+                publicKey,
+            });
+            await did.updateVerificaitonMethod({
+                id: newVerificaitonDid,
+                type: "Ed25519VerificationKey2018",
+                controller: did.getIdentifier(),
+                publicKey: updatePublicKey,
+            });
+
+            /**
+             *  wait for 9s so DIDOwner and VerificationMethod event to be propogated to mirror node
+             */
+            await new Promise((resolve) => setTimeout(resolve, 9000));
+
+            console.log(`${did.getIdentifier()}`);
+            console.log(`https://testnet.dragonglass.me/hedera/topics/${did.getTopicId().toString()}`);
+
+            const didDoc = await did.resolve();
+            const didDocument = didDoc.toJsonTree();
+
+            expect(didDocument).toEqual({
+                "@context": "https://www.w3.org/ns/did/v1",
+                assertionMethod: [`${did.getIdentifier()}#did-root-key`],
+                authentication: [`${did.getIdentifier()}#did-root-key`],
+                id: did.getIdentifier(),
+                verificationMethod: [
+                    {
+                        controller: did.getIdentifier(),
+                        id: `${did.getIdentifier()}#did-root-key`,
+                        publicKeyMultibase: Hashing.multibase.encode(privateKey.publicKey.toBytes()),
+                        type: "Ed25519VerificationKey2018",
+                    },
+                    {
+                        controller: did.getIdentifier(),
+                        id: newVerificaitonDid,
+                        publicKeyMultibase: Hashing.multibase.encode(updatePublicKey.toBytes()),
+                        type: "Ed25519VerificationKey2018",
+                    },
+                ],
+            });
+
+            // DIDOwner and VerificationMethod event
+            expect(did.getMessages().length).toEqual(3);
+        });
+        it("publish a revoke VerificationMethod message and verify DID Document", async () => {
+            const privateKey = PrivateKey.fromString(OPERATOR_KEY);
+            const did = new HcsDid({ privateKey, client });
+
+            //new verificaiton DID and publickey
+            const newVerificaitonDid =
+                "did:hedera:testnet:z6Mkkcn1EDXc5vzpmvnQeCKpEswyrnQG7qq59k92gFRm1EGk_0.0.29617801#key-1";
+            const publicKey = HcsDid.stringToPublicKey("z6Mkkcn1EDXc5vzpmvnQeCKpEswyrnQG7qq59k92gFRm1EGk");
+
+            await did.register();
+            await did.addVerificaitonMethod({
+                id: newVerificaitonDid,
+                type: "Ed25519VerificationKey2018",
+                controller: did.getIdentifier(),
+                publicKey,
+            });
+            await did.revokeVerificaitonMethod({
+                id: newVerificaitonDid,
+            });
+
+            /**
+             *  wait for 9s so DIDOwner and VerificationMethod event to be propogated to mirror node
+             */
+            await new Promise((resolve) => setTimeout(resolve, 9000));
+
+            console.log(`${did.getIdentifier()}`);
+            console.log(`https://testnet.dragonglass.me/hedera/topics/${did.getTopicId().toString()}`);
+
+            const didDoc = await did.resolve();
+            const didDocument = didDoc.toJsonTree();
+
+            expect(didDocument).toEqual({
+                "@context": "https://www.w3.org/ns/did/v1",
+                assertionMethod: [`${did.getIdentifier()}#did-root-key`],
+                authentication: [`${did.getIdentifier()}#did-root-key`],
+                id: did.getIdentifier(),
+                verificationMethod: [
+                    {
+                        controller: did.getIdentifier(),
+                        id: `${did.getIdentifier()}#did-root-key`,
+                        publicKeyMultibase: Hashing.multibase.encode(privateKey.publicKey.toBytes()),
+                        type: "Ed25519VerificationKey2018",
+                    },
+                ],
+            });
+
+            // DIDOwner and VerificationMethod event
+            expect(did.getMessages().length).toEqual(3);
         });
     });
 
@@ -542,6 +686,101 @@ describe("HcsDid", () => {
 
             // DIDOwner and VerificationMethod event
             expect(did.getMessages().length).toEqual(2);
+        });
+        it("publish an update VerificationRelationship message and verify DID Document", async () => {
+            const privateKey = PrivateKey.fromString(OPERATOR_KEY);
+            const did = new HcsDid({ privateKey, client });
+
+            //new verificaiton DID and publickey
+            const newVerificaitonDid =
+                "did:hedera:testnet:z6Mkkcn1EDXc5vzpmvnQeCKpEswyrnQG7qq59k92gFRm1EGk_0.0.29617801#key-1";
+            const publicKey = HcsDid.stringToPublicKey("z6Mkkcn1EDXc5vzpmvnQeCKpEswyrnQG7qq59k92gFRm1EGk");
+            const updatePublicKey = HcsDid.stringToPublicKey("z6MkhHbhBBLdKGiGnHPvrrH9GL7rgw6egpZiLgvQ9n7pHt1P");
+
+            await did.register();
+            await did.addVerificaitonRelationship({
+                id: newVerificaitonDid,
+                relationshipType: "authentication",
+                type: "Ed25519VerificationKey2018",
+                controller: did.getIdentifier(),
+                publicKey,
+            });
+            await did.updateVerificaitonRelationship({
+                id: newVerificaitonDid,
+                relationshipType: "authentication",
+                type: "Ed25519VerificationKey2018",
+                controller: did.getIdentifier(),
+                publicKey: updatePublicKey,
+            });
+
+            const didDoc = await did.resolve();
+            const didDocument = didDoc.toJsonTree();
+
+            expect(didDocument).toEqual({
+                "@context": "https://www.w3.org/ns/did/v1",
+                assertionMethod: [`${did.getIdentifier()}#did-root-key`],
+                authentication: [`${did.getIdentifier()}#did-root-key`, `${newVerificaitonDid}`],
+                id: did.getIdentifier(),
+                verificationMethod: [
+                    {
+                        controller: did.getIdentifier(),
+                        id: `${did.getIdentifier()}#did-root-key`,
+                        publicKeyMultibase: Hashing.multibase.encode(privateKey.publicKey.toBytes()),
+                        type: "Ed25519VerificationKey2018",
+                    },
+                    {
+                        controller: did.getIdentifier(),
+                        id: newVerificaitonDid,
+                        publicKeyMultibase: Hashing.multibase.encode(updatePublicKey.toBytes()),
+                        type: "Ed25519VerificationKey2018",
+                    },
+                ],
+            });
+
+            // DIDOwner and VerificationMethod event
+            expect(did.getMessages().length).toEqual(3);
+        });
+
+        it("publish a revoke VerificationRelationship message and verify DID Document", async () => {
+            const privateKey = PrivateKey.fromString(OPERATOR_KEY);
+            const did = new HcsDid({ privateKey, client });
+
+            //new verificaiton DID and publickey
+            const newVerificaitonDid =
+                "did:hedera:testnet:z6Mkkcn1EDXc5vzpmvnQeCKpEswyrnQG7qq59k92gFRm1EGk_0.0.29617801#key-1";
+            const publicKey = HcsDid.stringToPublicKey("z6Mkkcn1EDXc5vzpmvnQeCKpEswyrnQG7qq59k92gFRm1EGk");
+
+            await did.register();
+            await did.addVerificaitonRelationship({
+                id: newVerificaitonDid,
+                relationshipType: "authentication",
+                type: "Ed25519VerificationKey2018",
+                controller: did.getIdentifier(),
+                publicKey,
+            });
+            await did.revokeVerificaitonRelationship({
+                id: newVerificaitonDid,
+            });
+
+            const didDoc = await did.resolve();
+            const didDocument = didDoc.toJsonTree();
+
+            expect(didDocument).toEqual({
+                "@context": "https://www.w3.org/ns/did/v1",
+                assertionMethod: [`${did.getIdentifier()}#did-root-key`],
+                id: did.getIdentifier(),
+                verificationMethod: [
+                    {
+                        controller: did.getIdentifier(),
+                        id: `${did.getIdentifier()}#did-root-key`,
+                        publicKeyMultibase: Hashing.multibase.encode(privateKey.publicKey.toBytes()),
+                        type: "Ed25519VerificationKey2018",
+                    },
+                ],
+            });
+
+            // DIDOwner and VerificationMethod event
+            expect(did.getMessages().length).toEqual(3);
         });
     });
 });
