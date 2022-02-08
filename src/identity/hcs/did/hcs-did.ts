@@ -101,7 +101,7 @@ export class HcsDid {
         return this;
     }
 
-    public async resolve() {
+    public async resolve(): Promise<DidDocument> {
         if (!this.identifier) {
             throw new Error("DID is not registered");
         }
@@ -214,7 +214,7 @@ export class HcsDid {
     }) {
         this.validateClientConfig();
         if (!args || !args.id || !args.type || !args.controller || !args.publicKey) {
-            throw new Error("Verification Method args are missing");
+            throw new Error("Validation failed. Verification Method args are missing");
         }
 
         if (!this.isEventIdValid(args.id)) {
@@ -240,7 +240,7 @@ export class HcsDid {
     }) {
         this.validateClientConfig();
         if (!args || !args.id || !args.type || !args.controller || !args.publicKey) {
-            throw new Error("Verification Method args are missing");
+            throw new Error("Validation failed. Verification Method args are missing");
         }
 
         if (!this.isEventIdValid(args.id)) {
@@ -261,7 +261,7 @@ export class HcsDid {
     public async revokeVerificaitonMethod(args: { id: string }) {
         this.validateClientConfig();
         if (!args || !args.id) {
-            throw new Error("Verification Method args are missing");
+            throw new Error("Validation failed. Verification Method args are missing");
         }
 
         if (!this.isEventIdValid(args.id)) {
@@ -382,6 +382,10 @@ export class HcsDid {
 
     public getMethod() {
         return HcsDid.DID_METHOD;
+    }
+
+    public getMessages() {
+        return this.messages;
     }
 
     /**

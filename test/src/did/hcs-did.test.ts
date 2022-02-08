@@ -7,8 +7,8 @@ const OPERATOR_KEY = "302e020100300506032b657004220420bc45334a1313725653d3513fcc
 // testnet, previewnet, mainnet
 const NETWORK = "testnet";
 
-// hedera, kabuto (note kabuto not available on previewnet)
-const MIRROR_PROVIDER = "hedera";
+// hedera
+const MIRROR_PROVIDER = ["hcs." + NETWORK + ".mirrornode.hedera.com:5600"];
 
 describe("HcsDid", () => {
     describe("#constructor", () => {
@@ -79,7 +79,7 @@ describe("HcsDid", () => {
             const operatorId = AccountId.fromString(OPERATOR_ID);
             const operatorKey = PrivateKey.fromString(OPERATOR_KEY);
             client = Client.forTestnet();
-            client.setMirrorNetwork(["hcs." + NETWORK + ".mirrornode.hedera.com:5600"]);
+            client.setMirrorNetwork(MIRROR_PROVIDER);
             client.setOperator(operatorId, operatorKey);
         });
 
@@ -111,6 +111,7 @@ describe("HcsDid", () => {
         it("creates new DID by registering a topic and submitting first message", async () => {
             const privateKey = PrivateKey.fromString(OPERATOR_KEY);
             const did = new HcsDid({ privateKey, client });
+
             const result = await did.register();
 
             expect(result).toEqual(did);
@@ -138,7 +139,7 @@ describe("HcsDid", () => {
             const operatorId = AccountId.fromString(OPERATOR_ID);
             const operatorKey = PrivateKey.fromString(OPERATOR_KEY);
             client = Client.forTestnet();
-            client.setMirrorNetwork(["hcs." + NETWORK + ".mirrornode.hedera.com:5600"]);
+            client.setMirrorNetwork(MIRROR_PROVIDER);
             client.setOperator(operatorId, operatorKey);
         });
 
@@ -173,8 +174,8 @@ describe("HcsDid", () => {
 
             await did.register();
 
-            const newLocal: any = await did.resolve();
-            const didDocument = newLocal.toJsonTree();
+            const didDoc = await did.resolve();
+            const didDocument = didDoc.toJsonTree();
 
             expect(didDocument).toEqual({
                 "@context": "https://www.w3.org/ns/did/v1",
@@ -193,14 +194,14 @@ describe("HcsDid", () => {
         });
     });
 
-    describe("Add Service meta-information", () => {
+    describe("Add Update and Revoke Service meta-information", () => {
         let client;
 
         beforeAll(async () => {
             const operatorId = AccountId.fromString(OPERATOR_ID);
             const operatorKey = PrivateKey.fromString(OPERATOR_KEY);
             client = Client.forTestnet();
-            client.setMirrorNetwork(["hcs." + NETWORK + ".mirrornode.hedera.com:5600"]);
+            client.setMirrorNetwork(MIRROR_PROVIDER);
             client.setOperator(operatorId, operatorKey);
         });
 
@@ -236,7 +237,7 @@ describe("HcsDid", () => {
                 await did.addService(undefined);
             } catch (err) {
                 expect(err).toBeInstanceOf(Error);
-                expect(err.message).toEqual("Service args are missing");
+                expect(err.message).toEqual("Validation failed. Services args are missing");
             }
         });
 
@@ -249,7 +250,7 @@ describe("HcsDid", () => {
                 await did.addService({
                     id: did.getIdentifier() + "#invalid-1",
                     type: "LinkedDomains",
-                    serviceEndpoint: "https://test.meeco.me/vcs",
+                    serviceEndpoint: "https://example.com/vcs",
                 });
             } catch (err) {
                 expect(err).toBeInstanceOf(Error);
@@ -257,7 +258,7 @@ describe("HcsDid", () => {
             }
         });
 
-        it("publish a new Service message", async () => {
+        it("publish a new Service message and verify DID Document", async () => {
             const privateKey = PrivateKey.fromString(OPERATOR_KEY);
             const did = new HcsDid({ privateKey, client });
 
@@ -265,178 +266,284 @@ describe("HcsDid", () => {
             await did.addService({
                 id: did.getIdentifier() + "#service-1",
                 type: "LinkedDomains",
-                serviceEndpoint: "https://test.meeco.me/vcs",
+                serviceEndpoint: "https://example.com/vcs",
             });
 
             console.log(`https://testnet.dragonglass.me/hedera/topics/${did.getTopicId().toString()}`);
 
-            const messages = await readtTopicMessages(did.getTopicId(), client, 15000);
+            const didDoc = await did.resolve();
+            const didDocument = didDoc.toJsonTree();
+
+            expect(didDocument).toEqual({
+                "@context": "https://www.w3.org/ns/did/v1",
+                assertionMethod: [`${did.getIdentifier()}#did-root-key`],
+                authentication: [`${did.getIdentifier()}#did-root-key`],
+                id: did.getIdentifier(),
+                verificationMethod: [
+                    {
+                        controller: did.getIdentifier(),
+                        id: `${did.getIdentifier()}#did-root-key`,
+                        publicKeyMultibase: Hashing.multibase.encode(privateKey.publicKey.toBytes()),
+                        type: "Ed25519VerificationKey2018",
+                    },
+                ],
+                service: [
+                    {
+                        id: `${did.getIdentifier()}#service-1`,
+                        serviceEndpoint: "https://example.com/vcs",
+                        type: "LinkedDomains",
+                    },
+                ],
+            });
 
             // DIDOwner and Service event
-            expect(messages.length).toEqual(2);
+            expect(did.getMessages().length).toEqual(2);
+        });
+
+        it("publish an update Service message and verify DID Document", async () => {
+            const privateKey = PrivateKey.fromString(OPERATOR_KEY);
+            const did = new HcsDid({ privateKey, client });
+
+            await did.register();
+            await did.addService({
+                id: did.getIdentifier() + "#service-1",
+                type: "LinkedDomains",
+                serviceEndpoint: "https://example.com/vcs",
+            });
+            await did.updateService({
+                id: did.getIdentifier() + "#service-1",
+                type: "LinkedDomains",
+                serviceEndpoint: "https://example.com/did",
+            });
+
+            console.log(`https://testnet.dragonglass.me/hedera/topics/${did.getTopicId().toString()}`);
+
+            const didDoc = await did.resolve();
+            const didDocument = didDoc.toJsonTree();
+
+            expect(didDocument).toEqual({
+                "@context": "https://www.w3.org/ns/did/v1",
+                assertionMethod: [`${did.getIdentifier()}#did-root-key`],
+                authentication: [`${did.getIdentifier()}#did-root-key`],
+                id: did.getIdentifier(),
+                verificationMethod: [
+                    {
+                        controller: did.getIdentifier(),
+                        id: `${did.getIdentifier()}#did-root-key`,
+                        publicKeyMultibase: Hashing.multibase.encode(privateKey.publicKey.toBytes()),
+                        type: "Ed25519VerificationKey2018",
+                    },
+                ],
+                service: [
+                    {
+                        id: `${did.getIdentifier()}#service-1`,
+                        serviceEndpoint: "https://example.com/did",
+                        type: "LinkedDomains",
+                    },
+                ],
+            });
+
+            // DIDOwner and Service event
+            expect(did.getMessages().length).toEqual(3);
         });
     });
 
-    // describe("Add VerificationMethod meta-information", async () => {
-    //     let client;
+    describe("Add Update and Revoke VerificationMethod meta-information", () => {
+        let client;
 
-    //     before(async () => {
-    //         const operatorId = AccountId.fromString(OPERATOR_ID);
-    //         const operatorKey = PrivateKey.fromString(OPERATOR_KEY);
-    //         client = Client.forTestnet();
-    //         client.setMirrorNetwork(["hcs." + NETWORK + ".mirrornode.hedera.com:5600"]);
-    //         client.setOperator(operatorId, operatorKey);
-    //     });
+        beforeAll(async () => {
+            const operatorId = AccountId.fromString(OPERATOR_ID);
+            const operatorKey = PrivateKey.fromString(OPERATOR_KEY);
+            client = Client.forTestnet();
+            client.setMirrorNetwork(MIRROR_PROVIDER);
+            client.setOperator(operatorId, operatorKey);
+        });
 
-    //     it("throws error if privatekey is missing", async () => {
-    //         const identifier = "did:hedera:testnet:z6MkgUv5CvjRP6AsvEYqSRN7djB6p4zK9bcMQ93g5yK6Td7N_0.0.29613327";
-    //         const did = new HcsDid({ identifier });
+        it("throws error if privatekey is missing", async () => {
+            const identifier = "did:hedera:testnet:z6MkgUv5CvjRP6AsvEYqSRN7djB6p4zK9bcMQ93g5yK6Td7N_0.0.29613327";
+            const did = new HcsDid({ identifier });
 
-    //         try {
-    //             await did.addVerificaitonMethod({});
-    //         } catch (err) {
-    //             assert.instanceOf(err, Error);
-    //             assert.equal(err.message, "privateKey is missing");
-    //         }
-    //     });
+            try {
+                await did.addVerificaitonMethod(undefined);
+            } catch (err) {
+                expect(err).toBeInstanceOf(Error);
+                expect(err.message).toEqual("privateKey is missing");
+            }
+        });
 
-    //     it("throws error if client configuration is missing", async () => {
-    //         const privateKey = PrivateKey.generate();
-    //         const did = new HcsDid({ privateKey });
+        it("throws error if client configuration is missing", async () => {
+            const privateKey = PrivateKey.generate();
+            const did = new HcsDid({ privateKey });
 
-    //         try {
-    //             await did.addVerificaitonMethod({});
-    //         } catch (err) {
-    //             assert.instanceOf(err, Error);
-    //             assert.equal(err.message, "Client configuration is missing");
-    //         }
-    //     });
+            try {
+                await did.addVerificaitonMethod(undefined);
+            } catch (err) {
+                expect(err).toBeInstanceOf(Error);
+                expect(err.message).toEqual("Client configuration is missing");
+            }
+        });
 
-    //     it("throws error if Verification Method arguments are missing", async () => {
-    //         const privateKey = PrivateKey.generate();
-    //         const did = new HcsDid({ privateKey, client });
+        it("throws error if Verification Method arguments are missing", async () => {
+            const privateKey = PrivateKey.generate();
+            const did = new HcsDid({ privateKey, client });
 
-    //         try {
-    //             await did.addVerificaitonMethod();
-    //         } catch (err) {
-    //             assert.instanceOf(err, Error);
-    //             assert.equal(err.message, "Verification Method args are missing");
-    //         }
-    //     });
+            try {
+                await did.addVerificaitonMethod(undefined);
+            } catch (err) {
+                expect(err).toBeInstanceOf(Error);
+                expect(err.message).toEqual("Validation failed. Verification Method args are missing");
+            }
+        });
 
-    //     it("publish a new VerificationMethod message", async () => {
-    //         const privateKey = PrivateKey.fromString(OPERATOR_KEY);
-    //         const did = new HcsDid({ privateKey, client });
+        it("publish a new VerificationMethod message and verify DID Document", async () => {
+            const privateKey = PrivateKey.fromString(OPERATOR_KEY);
+            const did = new HcsDid({ privateKey, client });
 
-    //         //new verificaiton DID and publickey
-    //         const newVerificaitonDid =
-    //             "did:hedera:testnet:z6Mkkcn1EDXc5vzpmvnQeCKpEswyrnQG7qq59k92gFRm1EGk_0.0.29617801#public-key-0";
-    //         const publicKey = HcsDid.stringToPublicKey("z6Mkkcn1EDXc5vzpmvnQeCKpEswyrnQG7qq59k92gFRm1EGk");
+            //new verificaiton DID and publickey
+            const newVerificaitonDid =
+                "did:hedera:testnet:z6Mkkcn1EDXc5vzpmvnQeCKpEswyrnQG7qq59k92gFRm1EGk_0.0.29617801#key-1";
+            const publicKey = HcsDid.stringToPublicKey("z6Mkkcn1EDXc5vzpmvnQeCKpEswyrnQG7qq59k92gFRm1EGk");
 
-    //         await (
-    //             await did.register()
-    //         ).addVerificaitonMethod({
-    //             id: newVerificaitonDid,
-    //             type: "Ed25519VerificationKey2018",
-    //             controller: did.getIdentifier(),
-    //             publicKey,
-    //         });
+            await (
+                await did.register()
+            ).addVerificaitonMethod({
+                id: newVerificaitonDid,
+                type: "Ed25519VerificationKey2018",
+                controller: did.getIdentifier(),
+                publicKey,
+            });
 
-    //         /**
-    //          *  wait for 9s so DIDOwner and VerificationMethod event to be propogated to mirror node
-    //          */
-    //         await new Promise((resolve) => setTimeout(resolve, 9000));
+            /**
+             *  wait for 9s so DIDOwner and VerificationMethod event to be propogated to mirror node
+             */
+            await new Promise((resolve) => setTimeout(resolve, 9000));
 
-    //         console.log(`${did.getIdentifier()}`);
-    //         console.log(`https://testnet.dragonglass.me/hedera/topics/${did.getTopicId().toString()}`);
+            console.log(`${did.getIdentifier()}`);
+            console.log(`https://testnet.dragonglass.me/hedera/topics/${did.getTopicId().toString()}`);
 
-    //         const messages = await readtTopicMessages(did.getTopicId(), client);
+            const didDoc = await did.resolve();
+            const didDocument = didDoc.toJsonTree();
 
-    //         // DIDOwner and VerificationMethod event
-    //         assert.equal(messages.length, 2);
-    //     }).timeout(MINUTE_TIMEOUT_LIMIT);
-    // });
+            expect(didDocument).toEqual({
+                "@context": "https://www.w3.org/ns/did/v1",
+                assertionMethod: [`${did.getIdentifier()}#did-root-key`],
+                authentication: [`${did.getIdentifier()}#did-root-key`],
+                id: did.getIdentifier(),
+                verificationMethod: [
+                    {
+                        controller: did.getIdentifier(),
+                        id: `${did.getIdentifier()}#did-root-key`,
+                        publicKeyMultibase: Hashing.multibase.encode(privateKey.publicKey.toBytes()),
+                        type: "Ed25519VerificationKey2018",
+                    },
+                    {
+                        controller: did.getIdentifier(),
+                        id: newVerificaitonDid,
+                        publicKeyMultibase: Hashing.multibase.encode(publicKey.toBytes()),
+                        type: "Ed25519VerificationKey2018",
+                    },
+                ],
+            });
 
-    // describe("Add VerificationMethod Relationship meta-information", async () => {
-    //     let client;
+            // DIDOwner and VerificationMethod event
+            expect(did.getMessages().length).toEqual(2);
+        });
+    });
 
-    //     before(async () => {
-    //         const operatorId = AccountId.fromString(OPERATOR_ID);
-    //         const operatorKey = PrivateKey.fromString(OPERATOR_KEY);
-    //         client = Client.forTestnet();
-    //         client.setMirrorNetwork(["hcs." + NETWORK + ".mirrornode.hedera.com:5600"]);
-    //         client.setOperator(operatorId, operatorKey);
-    //     });
+    describe("Add Update and Revoke VerificationMethod Relationship meta-information", () => {
+        let client;
 
-    //     it("throws error if privatekey is missing", async () => {
-    //         const identifier = "did:hedera:testnet:z6MkgUv5CvjRP6AsvEYqSRN7djB6p4zK9bcMQ93g5yK6Td7N_0.0.29613327";
-    //         const did = new HcsDid({ identifier });
+        beforeAll(async () => {
+            const operatorId = AccountId.fromString(OPERATOR_ID);
+            const operatorKey = PrivateKey.fromString(OPERATOR_KEY);
+            client = Client.forTestnet();
+            client.setMirrorNetwork(MIRROR_PROVIDER);
+            client.setOperator(operatorId, operatorKey);
+        });
 
-    //         try {
-    //             await did.addVerificaitonMethod({});
-    //         } catch (err) {
-    //             assert.instanceOf(err, Error);
-    //             assert.equal(err.message, "privateKey is missing");
-    //         }
-    //     });
+        it("throws error if privatekey is missing", async () => {
+            const identifier = "did:hedera:testnet:z6MkgUv5CvjRP6AsvEYqSRN7djB6p4zK9bcMQ93g5yK6Td7N_0.0.29613327";
+            const did = new HcsDid({ identifier });
 
-    //     it("throws error if client configuration is missing", async () => {
-    //         const privateKey = PrivateKey.generate();
-    //         const did = new HcsDid({ privateKey });
+            try {
+                await did.addVerificaitonMethod(undefined);
+            } catch (err) {
+                expect(err).toBeInstanceOf(Error);
+                expect(err.message).toEqual("privateKey is missing");
+            }
+        });
 
-    //         try {
-    //             await did.addVerificaitonMethod({});
-    //         } catch (err) {
-    //             assert.instanceOf(err, Error);
-    //             assert.equal(err.message, "Client configuration is missing");
-    //         }
-    //     });
+        it("throws error if client configuration is missing", async () => {
+            const privateKey = PrivateKey.generate();
+            const did = new HcsDid({ privateKey });
 
-    //     it("throws error if Verification Relationship arguments are missing", async () => {
-    //         const privateKey = PrivateKey.generate();
-    //         const did = new HcsDid({ privateKey, client });
+            try {
+                await did.addVerificaitonMethod(undefined);
+            } catch (err) {
+                expect(err).toBeInstanceOf(Error);
+                expect(err.message).toEqual("Client configuration is missing");
+            }
+        });
 
-    //         try {
-    //             await did.addVerificaitonRelationship();
-    //         } catch (err) {
-    //             assert.instanceOf(err, Error);
-    //             assert.equal(err.message, "Verification Relationship args are missing");
-    //         }
-    //     });
+        it("throws error if Verification Relationship arguments are missing", async () => {
+            const privateKey = PrivateKey.generate();
+            const did = new HcsDid({ privateKey, client });
 
-    //     it("publish a new VerificationRelationship message", async () => {
-    //         const privateKey = PrivateKey.fromString(OPERATOR_KEY);
-    //         const did = new HcsDid({ privateKey, client });
+            try {
+                await did.addVerificaitonRelationship(undefined);
+            } catch (err) {
+                expect(err).toBeInstanceOf(Error);
+                expect(err.message).toEqual("Verification Relationship args are missing");
+            }
+        });
 
-    //         //new verificaiton DID and publickey
-    //         const newVerificaitonDid =
-    //             "did:hedera:testnet:z6Mkkcn1EDXc5vzpmvnQeCKpEswyrnQG7qq59k92gFRm1EGk_0.0.29617801#delegate-key1";
-    //         const publicKey = HcsDid.stringToPublicKey("z6Mkkcn1EDXc5vzpmvnQeCKpEswyrnQG7qq59k92gFRm1EGk");
+        it("publish a new VerificationRelationship message and verify DID Document", async () => {
+            const privateKey = PrivateKey.fromString(OPERATOR_KEY);
+            const did = new HcsDid({ privateKey, client });
 
-    //         await (
-    //             await did.register()
-    //         ).addVerificaitonRelationship({
-    //             id: newVerificaitonDid,
-    //             relationshipType: "authentication",
-    //             type: "Ed25519VerificationKey2018",
-    //             controller: did.getIdentifier(),
-    //             publicKey,
-    //         });
+            //new verificaiton DID and publickey
+            const newVerificaitonDid =
+                "did:hedera:testnet:z6Mkkcn1EDXc5vzpmvnQeCKpEswyrnQG7qq59k92gFRm1EGk_0.0.29617801#key-1";
+            const publicKey = HcsDid.stringToPublicKey("z6Mkkcn1EDXc5vzpmvnQeCKpEswyrnQG7qq59k92gFRm1EGk");
 
-    //         /**
-    //          *  wait for 9s so DIDOwner and VerificationMethod event to be propogated to mirror node
-    //          */
-    //         await new Promise((resolve) => setTimeout(resolve, 9000));
+            await (
+                await did.register()
+            ).addVerificaitonRelationship({
+                id: newVerificaitonDid,
+                relationshipType: "authentication",
+                type: "Ed25519VerificationKey2018",
+                controller: did.getIdentifier(),
+                publicKey,
+            });
 
-    //         console.log(`${did.getIdentifier()}`);
-    //         console.log(`https://testnet.dragonglass.me/hedera/topics/${did.getTopicId().toString()}`);
+            const didDoc = await did.resolve();
+            const didDocument = didDoc.toJsonTree();
 
-    //         const messages = await readtTopicMessages(did.getTopicId(), client);
+            expect(didDocument).toEqual({
+                "@context": "https://www.w3.org/ns/did/v1",
+                assertionMethod: [`${did.getIdentifier()}#did-root-key`],
+                authentication: [`${did.getIdentifier()}#did-root-key`, `${newVerificaitonDid}`],
+                id: did.getIdentifier(),
+                verificationMethod: [
+                    {
+                        controller: did.getIdentifier(),
+                        id: `${did.getIdentifier()}#did-root-key`,
+                        publicKeyMultibase: Hashing.multibase.encode(privateKey.publicKey.toBytes()),
+                        type: "Ed25519VerificationKey2018",
+                    },
+                    {
+                        controller: did.getIdentifier(),
+                        id: newVerificaitonDid,
+                        publicKeyMultibase: Hashing.multibase.encode(publicKey.toBytes()),
+                        type: "Ed25519VerificationKey2018",
+                    },
+                ],
+            });
 
-    //         // DIDOwner and VerificationMethod event
-    //         assert.equal(messages.length, 2);
-    //     }).timeout(MINUTE_TIMEOUT_LIMIT);
-    // });
+            // DIDOwner and VerificationMethod event
+            expect(did.getMessages().length).toEqual(2);
+        });
+    });
 });
 
 /**
