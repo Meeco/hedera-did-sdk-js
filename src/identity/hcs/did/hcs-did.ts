@@ -342,7 +342,7 @@ export class HcsDid {
      * @param args
      * @returns this
      */
-    public async revokeVerificaitonRelationship(args: { id: string }) {
+    public async revokeVerificaitonRelationship(args: { id: string; relationshipType: VerificationRelationshipType }) {
         this.validateClientConfig();
         if (!args || !args.id) {
             throw new Error("Verification Relationship args are missing");
@@ -351,7 +351,7 @@ export class HcsDid {
         if (!this.isEventIdValid(args.id)) {
             throw new Error("Event ID is invalid. Expected format: {did}#{key|service}-{integer}");
         }
-        const event = new HcsDidRevokeVerificationRelationshipEvent(args.id);
+        const event = new HcsDidRevokeVerificationRelationshipEvent(args.id, args.relationshipType);
         await this.submitTransaciton(DidMethodOperation.REVOKE, event, this.privateKey);
         return this;
     }

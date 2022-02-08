@@ -760,6 +760,7 @@ describe("HcsDid", () => {
             });
             await did.revokeVerificaitonRelationship({
                 id: newVerificaitonDid,
+                relationshipType: "authentication",
             });
 
             const didDoc = await did.resolve();
