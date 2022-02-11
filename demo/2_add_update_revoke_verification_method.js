@@ -1,13 +1,13 @@
 const { PrivateKey, Client } = require("@hashgraph/sdk");
 const { HcsDid } = require("../dist");
-const { OPERATOR_ID, PRIVATE_KEY_STR } = require("./config");
+const { OPERATOR_ID, OPERATOR_KEY } = require("./config");
 
 async function main() {
     /**
      * Setup
      */
     const client = Client.forTestnet();
-    client.setOperator(OPERATOR_ID, PRIVATE_KEY_STR);
+    client.setOperator(OPERATOR_ID, OPERATOR_KEY);
 
     /**
      * CHANGE IT. use values from step 1: registered DID console output

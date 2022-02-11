@@ -1,5 +1,5 @@
 const { Client } = require("@hashgraph/sdk");
-const { HcsDid, HcsDidResolver } = require("../dist");
+const { HcsDid } = require("../dist");
 
 async function main() {
     /**

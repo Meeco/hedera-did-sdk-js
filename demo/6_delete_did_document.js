@@ -1,12 +1,12 @@
 const { PrivateKey, Client } = require("@hashgraph/sdk");
 const { HcsDid } = require("../dist");
-const { OPERATOR_ID, PRIVATE_KEY_STR } = require("./config");
+const { OPERATOR_ID, OPERATOR_KEY } = require("./config");
 
 async function main() {
     /**
      * Client setup
      */
-    const privateKey = PrivateKey.fromString(PRIVATE_KEY_STR);
+    const privateKey = PrivateKey.fromString(OPERATOR_KEY);
     const client = Client.forTestnet();
     client.setOperator(OPERATOR_ID, privateKey);
 
