@@ -41,7 +41,7 @@ npm install --save @hashgraph/did-sdk-js
 
 ## Examples:
 
-Sample demo setp by step javascript example are avalible at [Demo Folder][demo-location]. Make sure to add appropriate `testnet` account details in <b>`config.js`</b>
+Sample demo step by step javascript example are available at [Demo Folder][demo-location]. Make sure to add appropriate `testnet` account details in <b>`config.js`</b>
 
 -   OPERATOR_ID=0.0.xxxx
 -   OPERATOR_KEY=302...
