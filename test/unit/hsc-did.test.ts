@@ -158,15 +158,4 @@ describe("HcsDid", () => {
             expect(result).toEqual(privateKey.publicKey);
         });
     });
-
-    // describe("#parsePublicKeyFromIdentifier", () => {
-    //     it("should get publicKey from identifier", () => {
-
-    //         const privateKey = PrivateKey.fromString(
-    //             "302e020100300506032b657004220420a4b76d7089dfd33c83f586990c3a36ae92fb719fdf262e7749d1b0ddd1d055b0"
-    //         );
-    //         const result = HcsDid.stringToPublicKey("z6MkvD6JAfMyP6pgQoYxfE9rubgwLD9Hmz8rQh1FAxvbW8XB");
-    //         expect(result).toEqual(privateKey.publicKey);
-    //     });
-    // });
 });
