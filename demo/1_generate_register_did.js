@@ -6,18 +6,18 @@ async function main() {
     /**
      * Client setup
      */
-    const privateKey = PrivateKey.fromString(PRIVATE_KEY_STR);
     const client = Client.forTestnet();
-    client.setOperator(OPERATOR_ID, privateKey);
+    client.setOperator(OPERATOR_ID, PRIVATE_KEY_STR);
 
     /**
-     * Build DID intance
+     * Build DID instance
      */
-    const did = new HcsDid({ privateKey: privateKey, client: client });
+    const didPrivateKey = PrivateKey.generate();
+    const did = new HcsDid({ privateKey: didPrivateKey, client: client });
     const registeredDid = await did.register();
 
-    console.log(`PRIVATE KEY: ${privateKey.toString()}`);
-    console.log(`PUBLIC KEY: ${privateKey.publicKey.toString()}`);
+    console.log(`DID PRIVATE KEY: ${didPrivateKey.toString()}`);
+    console.log(`DID PUBLIC KEY: ${didPrivateKey.publicKey.toString()}`);
     console.log("\n");
     console.log(registeredDid.getIdentifier());
 }
