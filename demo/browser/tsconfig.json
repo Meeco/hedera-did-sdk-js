@@ -1,0 +1,14 @@
+{
+  "compilerOptions": {
+    "target": "esnext",
+    "module": "esnext",    
+    "moduleResolution": "node",
+    "skipDefaultLibCheck": true,
+    "lib": ["ESNext", "DOM"],
+    "allowJs": true,
+    "baseUrl": "./src",
+    "outDir": "./lib",
+    "skipLibCheck": true,
+  },
+  "include": ["src"]
+}

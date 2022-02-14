@@ -1,2 +1,6 @@
 /node_modules/
 /dist/
+
+/demo/browser/node_modules/
+/demo/browser/dist/
+/demo/browser/lib/
