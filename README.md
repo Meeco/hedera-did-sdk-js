@@ -1,3 +1,8 @@
+
+> This project is deprecated. Please see the [Hiero DID SDK JavaScript](https://github.com/hiero-ledger/hiero-did-sdk-js).
+  
+---
+
 # did-sdk-js
 
 Support for the [Hedera Hashgraph DID Method](https://github.com/hashgraph/did-method) on the [Hedera JavaScript/TypeScript SDK](https://github.com/hashgraph/hedera-sdk-js).
